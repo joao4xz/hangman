@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require 'json'
+
 require_relative 'hangman/menu_handling'
 
 # Game hangman class
-class Hangman
+class Hangman # rubocop: disable Metrics/ClassLength
   include MenuHandling
 
   def initialize
@@ -15,10 +17,13 @@ class Hangman
   end
 
   def game_setup # rubocop: disable Metrics/MethodLength
-    random_word
+    puts "\n[TIP] Type \"Load\" to load a game and \"Save\" to save it."
     while @game_status == 'not_over'
       puts "\nGuess a letter:"
       guessed_letter = gets.chomp.downcase
+      save_game and break if guessed_letter == 'save'
+
+      load_game and next if guessed_letter == 'load'
       next unless letter_valid? guessed_letter
 
       @guessed[:letters].push guessed_letter
@@ -76,6 +81,33 @@ class Hangman
       return 'lost'
     end
     'not_over'
+  end
+
+  def save_game
+    puts "\nWrite the save file name:"
+    file_name = gets.chomp.downcase
+    puts "\nSaving file to \"#{file_name}\"..."
+    Dir.mkdir('saves') unless File.exist?('saves')
+    File.open("saves/#{file_name}", 'w') do |f|
+      json_hash = { word: @word, masked_word: @masked_word, guessed: @guessed, game_status: @game_status }
+      f.write(JSON.pretty_generate(json_hash))
+    end
+    true
+  end
+
+  def load_game # rubocop:disable Metrics/MethodLength
+    puts "\nWrite the file to load:"
+    file_name = gets.chomp.downcase
+    if File.exist?("saves/#{file_name}")
+      file = File.read("saves/#{file_name}")
+      parsed_data = JSON.parse(file, { symbolize_names: true })
+      @word, @masked_word, @guessed, @game_status = parsed_data.values_at(:word, :masked_word, :guessed, :game_status)
+      puts 'File loaded!'
+      print_round
+    else
+      puts 'Invalid filename!'
+    end
+    true
   end
 
   def reset_game

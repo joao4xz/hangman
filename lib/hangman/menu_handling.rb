@@ -6,10 +6,14 @@ module MenuHandling
     puts 'Welcome to Hangman!'
 
     loop do
-      puts "\nType [S] to start, [H] for help or [Q] to quit."
+      puts "\nType [S] to start, [L] to load a game, [H] for help or [Q] to quit."
       menu_option = gets.chomp.downcase
       case menu_option
       when  's'
+        random_word
+        game_setup
+      when  'l'
+        load_game
         game_setup
       when  'h'
         print_help
